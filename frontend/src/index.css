@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Core surfaces */
+  :root,
+  .dark {
+    /* Core surfaces - Enforced Light Theme */
     --background: 0 0% 100%;
     --foreground: 220 20% 8%;
 
@@ -76,64 +77,6 @@
     --shadow-lg: 0 10px 15px -3px hsl(220 20% 8% / 0.08), 0 4px 6px -4px hsl(220 20% 8% / 0.08);
     --shadow-blue: 0 4px 24px -4px hsl(217 91% 60% / 0.25);
     --shadow-red: 0 4px 24px -4px hsl(0 84% 60% / 0.25);
-  }
-
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
-
-    --accent: 216 34% 17%;
-    --accent-foreground: 210 40% 98%;
-
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.1%;
-
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
-
-    --secondary: 222.2 47.4% 11.2%;
-    --secondary-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 216 34% 17%;
-
-    --radius: 0.5rem;
-
-    --suspicious: 0 84% 60%;
-    --suspicious-glow: 0 84% 70%;
-    --suspicious-dim: 0 84% 15%;
-    --safe: 142 76% 36%;
-    --safe-dim: 142 76% 10%;
-    --warning: 38 92% 50%;
-    --warning-dim: 38 92% 15%;
-
-    --graph-bg: 224 71% 2%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.2);
-    --shadow-blue: 0 4px 24px -4px hsl(217 91% 60% / 0.1);
-    --shadow-red: 0 4px 24px -4px hsl(0 84% 60% / 0.1);
   }
 }
 

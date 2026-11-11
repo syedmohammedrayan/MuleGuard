@@ -1,6 +1,6 @@
 import { useMuleContext } from '@/context/MuleContext';
 import { motion } from 'framer-motion';
-import { Sliders, Zap, Moon, Sun, Shield } from 'lucide-react';
+import { Zap, Shield } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 
@@ -100,28 +100,6 @@ export default function Settings() {
                             />
                             <p className="text-xs text-muted-foreground">Accounts above this (but below Critical) are High Risk.</p>
                         </div>
-                    </div>
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="p-6 rounded-xl border border-border bg-card shadow-sm"
-                >
-                    <div className="flex items-center gap-2 mb-4 text-foreground">
-                        <Moon className="w-5 h-5 text-indigo-500" />
-                        <h2 className="text-lg font-semibold">Appearance</h2>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="font-medium">Dark Mode</div>
-                            <div className="text-sm text-muted-foreground">Toggle application theme.</div>
-                        </div>
-                        <Switch
-                            checked={settings.enableDarkTheme}
-                            onCheckedChange={(c) => updateSettings({ enableDarkTheme: c })}
-                        />
                     </div>
                 </motion.div>
 
