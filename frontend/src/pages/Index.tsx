@@ -24,7 +24,7 @@ const TABS: { id: Tab; label: string; icon: typeof Network }[] = [
 import { DecorativeBackground } from '@/components/DecorativeBackground';
 
 export default function Index() {
-  const { state, result, transactions, error, isMockMode, fileName, analyze, loadMockData, reset, downloadJSON } = useMuleContext();
+  const { state, result, transactions, error, fileName, analyze, reset, downloadJSON } = useMuleContext();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('graph');
 
@@ -107,7 +107,7 @@ export default function Index() {
                 </div>
 
                 <div className="relative z-10 bg-background/50 backdrop-blur-sm rounded-2xl border border-border/50 shadow-2xl">
-                  <UploadZone onFile={analyze} onMock={loadMockData} />
+                  <UploadZone onFile={analyze} />
                 </div>
 
                 {/* Feature grid */}
@@ -208,7 +208,7 @@ export default function Index() {
               </div>
 
               {/* Summary cards */}
-              <StatCards summary={result.summary} isMockMode={isMockMode} />
+              <StatCards summary={result.summary} />
 
               {/* Tabs */}
               <div className="flex gap-1 p-1 bg-muted rounded-xl w-fit">

@@ -5,7 +5,6 @@ import { AnalysisSummary } from '@/services/api';
 
 interface Props {
   summary: AnalysisSummary;
-  isMockMode: boolean;
 }
 
 const cardConfig = [
@@ -47,7 +46,7 @@ const cardConfig = [
   },
 ];
 
-export function StatCards({ summary, isMockMode }: Props) {
+export function StatCards({ summary }: Props) {
   const suspicionRate = summary.total_accounts_analyzed > 0
     ? ((summary.suspicious_accounts_flagged / summary.total_accounts_analyzed) * 100).toFixed(1)
     : '0';
@@ -83,11 +82,6 @@ export function StatCards({ summary, isMockMode }: Props) {
                 <TrendingUp className="w-3.5 h-3.5 text-suspicious" />
                 <span>{suspicionRate}% flag rate</span>
               </div>
-            )}
-            {isMockMode && (
-              <span className="absolute top-2 right-2 text-[9px] font-mono bg-warning/10 text-warning px-1.5 py-0.5 rounded-full border border-warning/20">
-                MOCK
-              </span>
             )}
           </motion.div>
         );

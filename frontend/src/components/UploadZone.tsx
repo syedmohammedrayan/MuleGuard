@@ -1,15 +1,14 @@
 // src/components/UploadZone.tsx
 import { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileSpreadsheet, Zap, Shield } from 'lucide-react';
+import { Upload, FileSpreadsheet, Zap } from 'lucide-react';
 
 interface Props {
   onFile: (file: File) => void;
-  onMock: () => void;
   disabled?: boolean;
 }
 
-export function UploadZone({ onFile, onMock, disabled }: Props) {
+export function UploadZone({ onFile, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = useCallback(
@@ -104,24 +103,6 @@ export function UploadZone({ onFile, onMock, disabled }: Props) {
           </div>
         </div>
       </label>
-
-      <div className="mt-4 flex items-center gap-3">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-muted-foreground font-medium">OR</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-
-      <motion.button
-        onClick={onMock}
-        disabled={disabled}
-        className="mt-4 w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border border-primary/30 bg-primary-dim text-primary font-semibold text-sm hover:bg-primary hover:text-primary-foreground hover:shadow-blue transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-      >
-        <Shield className="w-4 h-4" />
-        Run Demo with Mock Data
-        <span className="text-xs font-normal opacity-70">(No backend required)</span>
-      </motion.button>
     </motion.div>
   );
 }

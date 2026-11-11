@@ -2,11 +2,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { Shield, LayoutDashboard, FileText, Split, Menu, BarChart2, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useMuleContext } from '@/context/MuleContext';
 
 export function Navbar() {
     const location = useLocation();
-    const { fileName, isMockMode } = useMuleContext();
     const [isOpen, setIsOpen] = useState(false);
 
     const navs = [

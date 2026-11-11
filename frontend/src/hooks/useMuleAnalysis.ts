@@ -99,83 +99,66 @@ export function analyzeLocally(transactions: Transaction[]): AnalysisResult {
   const suspiciousMap = new Map<string, { score: number; patterns: string[]; ringId: string }>();
   const usedRingIds = new Set<string>();
 
-  // Deduplicate cycles
-  const seen = new Set<string>();
-  const uniqueCycles = cycles.filter(c => {
-    const key = [...c].sort().join('|');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  uniqueCycles.slice(0, 20).forEach((cycle, i) => {
+  cycles.forEach((cycle, i) => {
     const ringId = `RING_${String(i + 1).padStart(3, '0')}`;
     usedRingIds.add(ringId);
-    const riskScore = Math.min(95, 60 + cycle.length * 5 + Math.random() * 15);
     fraudRings.push({
       ring_id: ringId,
       member_accounts: cycle,
       pattern_type: `cycle_length_${cycle.length}`,
-      risk_score: parseFloat(riskScore.toFixed(1)),
+      risk_score: Math.min(100, 85 + cycle.length * 2),
     });
-    cycle.forEach(acc => {
-      const existing = suspiciousMap.get(acc);
-      const score = Math.min(100, riskScore + 10 + Math.random() * 15);
-      if (!existing || existing.score < score) {
-        suspiciousMap.set(acc, {
-          score: parseFloat(score.toFixed(1)),
-          patterns: [`cycle_length_${cycle.length}`, 'circular_routing'],
-          ringId,
-        });
-      }
-    });
-  });
-
-  // Smurfing rings
-  const smurfRingIdx = fraudRings.length;
-  [...fanIn, ...fanOut].forEach((acc, i) => {
-    const ringId = `RING_${String(smurfRingIdx + i + 1).padStart(3, '0')}`;
-    const isFanIn = fanIn.includes(acc);
-    const score = parseFloat((65 + Math.random() * 25).toFixed(1));
-    if (!suspiciousMap.has(acc)) {
-      suspiciousMap.set(acc, {
-        score,
-        patterns: [isFanIn ? 'fan_in_aggregation' : 'fan_out_dispersion', 'smurfing'],
-        ringId,
-      });
-      if (!usedRingIds.has(ringId)) {
-        usedRingIds.add(ringId);
-        const neighbors = isFanIn
-          ? transactions.filter(t => t.receiver_id === acc).map(t => t.sender_id).slice(0, 8)
-          : transactions.filter(t => t.sender_id === acc).map(t => t.receiver_id).slice(0, 8);
-        fraudRings.push({
-          ring_id: ringId,
-          member_accounts: [acc, ...neighbors],
-          pattern_type: isFanIn ? 'fan_in' : 'fan_out',
-          risk_score: parseFloat((score - 5).toFixed(1)),
-        });
-      }
+    for (const acc of cycle) {
+      const existing = suspiciousMap.get(acc) || { score: 0, patterns: [], ringId };
+      existing.score = Math.min(100, existing.score + 80);
+      existing.patterns.push(`cycle_length_${cycle.length}`, 'circular_routing');
+      suspiciousMap.set(acc, existing);
     }
   });
 
-  // Shell accounts
+  // Add smurfing accounts
+  fanIn.forEach((acc, i) => {
+    const ringId = `RING_${String(usedRingIds.size + i + 1).padStart(3, '0')}`;
+    fraudRings.push({
+      ring_id: ringId,
+      member_accounts: [acc],
+      pattern_type: 'fan_in',
+      risk_score: 75.0,
+    });
+    const existing = suspiciousMap.get(acc) || { score: 0, patterns: [], ringId };
+    existing.score = Math.min(100, existing.score + 30);
+    existing.patterns.push('fan_in_aggregation', 'smurfing');
+    suspiciousMap.set(acc, existing);
+  });
+
+  fanOut.forEach((acc, i) => {
+    const ringId = `RING_${String(usedRingIds.size + fanIn.length + i + 1).padStart(3, '0')}`;
+    fraudRings.push({
+      ring_id: ringId,
+      member_accounts: [acc],
+      pattern_type: 'fan_out',
+      risk_score: 75.0,
+    });
+    const existing = suspiciousMap.get(acc) || { score: 0, patterns: [], ringId };
+    existing.score = Math.min(100, existing.score + 30);
+    existing.patterns.push('fan_out_dispersion', 'smurfing');
+    suspiciousMap.set(acc, existing);
+  });
+
+  // Add shells
   shells.forEach(acc => {
-    if (!suspiciousMap.has(acc)) {
-      const ringId = `RING_SHELL_${acc.slice(-3)}`;
-      suspiciousMap.set(acc, {
-        score: parseFloat((45 + Math.random() * 30).toFixed(1)),
-        patterns: ['shell_account', 'low_transaction_count'],
-        ringId,
-      });
-    }
+    const existing = suspiciousMap.get(acc) || { score: 0, patterns: [], ringId: 'SHELL' };
+    existing.score = Math.min(100, existing.score + 40);
+    existing.patterns.push('shell_account', 'layered_network');
+    suspiciousMap.set(acc, existing);
   });
 
-  const suspicious_accounts = [...suspiciousMap.entries()]
-    .map(([account_id, v]) => ({
-      account_id,
-      suspicion_score: v.score,
-      detected_patterns: v.patterns,
-      ring_id: v.ringId,
+  const suspicious_accounts: AnalysisResult['suspicious_accounts'] = [...suspiciousMap.entries()]
+    .map(([id, data]) => ({
+      account_id: id,
+      suspicion_score: parseFloat(data.score.toFixed(1)),
+      detected_patterns: [...new Set(data.patterns)],
+      ring_id: data.ringId,
     }))
     .sort((a, b) => b.suspicion_score - a.suspicion_score);
 
@@ -193,46 +176,6 @@ export function analyzeLocally(transactions: Transaction[]): AnalysisResult {
   };
 }
 
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-export const MOCK_RESULT: AnalysisResult = {
-  suspicious_accounts: [
-    { account_id: 'ACC_00123', suspicion_score: 97.5, detected_patterns: ['cycle_length_3', 'high_velocity', 'circular_routing'], ring_id: 'RING_001' },
-    { account_id: 'ACC_00456', suspicion_score: 94.2, detected_patterns: ['cycle_length_4', 'circular_routing'], ring_id: 'RING_001' },
-    { account_id: 'ACC_00789', suspicion_score: 91.0, detected_patterns: ['fan_out_dispersion', 'smurfing'], ring_id: 'RING_002' },
-    { account_id: 'ACC_01234', suspicion_score: 87.3, detected_patterns: ['fan_in_aggregation', 'smurfing'], ring_id: 'RING_002' },
-    { account_id: 'ACC_01567', suspicion_score: 82.1, detected_patterns: ['cycle_length_3', 'circular_routing'], ring_id: 'RING_003' },
-    { account_id: 'ACC_01890', suspicion_score: 79.8, detected_patterns: ['shell_account', 'low_transaction_count'], ring_id: 'RING_004' },
-    { account_id: 'ACC_02123', suspicion_score: 74.5, detected_patterns: ['cycle_length_5', 'layered_network'], ring_id: 'RING_003' },
-    { account_id: 'ACC_02456', suspicion_score: 68.9, detected_patterns: ['fan_out_dispersion'], ring_id: 'RING_002' },
-  ],
-  fraud_rings: [
-    { ring_id: 'RING_001', member_accounts: ['ACC_00123', 'ACC_00456', 'ACC_00321'], pattern_type: 'cycle_length_3', risk_score: 95.3 },
-    { ring_id: 'RING_002', member_accounts: ['ACC_00789', 'ACC_01234', 'ACC_02456', 'ACC_03111', 'ACC_03222', 'ACC_03333'], pattern_type: 'fan_out', risk_score: 88.7 },
-    { ring_id: 'RING_003', member_accounts: ['ACC_01567', 'ACC_02123', 'ACC_02789', 'ACC_02890', 'ACC_02991'], pattern_type: 'cycle_length_5', risk_score: 81.2 },
-    { ring_id: 'RING_004', member_accounts: ['ACC_01890', 'ACC_04001', 'ACC_04002'], pattern_type: 'shell_network', risk_score: 72.4 },
-  ],
-  summary: {
-    total_accounts_analyzed: 500,
-    suspicious_accounts_flagged: 8,
-    fraud_rings_detected: 4,
-    processing_time_seconds: 1.87,
-  },
-};
-
-export const MOCK_TRANSACTIONS: Transaction[] = [
-  { transaction_id: 'TXN_001', sender_id: 'ACC_00123', receiver_id: 'ACC_00456', amount: 9500, timestamp: '2024-01-15 10:23:00' },
-  { transaction_id: 'TXN_002', sender_id: 'ACC_00456', receiver_id: 'ACC_00321', amount: 9200, timestamp: '2024-01-15 11:45:00' },
-  { transaction_id: 'TXN_003', sender_id: 'ACC_00321', receiver_id: 'ACC_00123', amount: 8900, timestamp: '2024-01-15 14:10:00' },
-  { transaction_id: 'TXN_004', sender_id: 'ACC_00789', receiver_id: 'ACC_03111', amount: 2000, timestamp: '2024-01-16 09:00:00' },
-  { transaction_id: 'TXN_005', sender_id: 'ACC_00789', receiver_id: 'ACC_03222', amount: 1800, timestamp: '2024-01-16 09:05:00' },
-  { transaction_id: 'TXN_006', sender_id: 'ACC_00789', receiver_id: 'ACC_03333', amount: 1900, timestamp: '2024-01-16 09:07:00' },
-  { transaction_id: 'TXN_007', sender_id: 'ACC_01234', receiver_id: 'ACC_00789', amount: 12000, timestamp: '2024-01-16 08:55:00' },
-  { transaction_id: 'TXN_008', sender_id: 'ACC_01567', receiver_id: 'ACC_02123', amount: 5500, timestamp: '2024-01-17 11:30:00' },
-  { transaction_id: 'TXN_009', sender_id: 'ACC_02123', receiver_id: 'ACC_02789', amount: 5300, timestamp: '2024-01-17 13:20:00' },
-  { transaction_id: 'TXN_010', sender_id: 'ACC_02789', receiver_id: 'ACC_01567', amount: 5100, timestamp: '2024-01-17 15:40:00' },
-];
-
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useMuleAnalysis() {
@@ -240,7 +183,6 @@ export function useMuleAnalysis() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isMockMode, setIsMockMode] = useState(false);
   const [fileName, setFileName] = useState('');
 
   const parseCSV = (file: File): Promise<Transaction[]> =>
@@ -259,7 +201,6 @@ export function useMuleAnalysis() {
 
   const analyze = useCallback(async (file: File) => {
     setFileName(file.name);
-    setIsMockMode(false);
     setState('scanning');
     setError(null);
 
@@ -291,23 +232,11 @@ export function useMuleAnalysis() {
     }
   }, []);
 
-  const loadMockData = useCallback(async () => {
-    setIsMockMode(true);
-    setFileName('mock_transactions.csv');
-    setState('scanning');
-    setError(null);
-    await new Promise(r => setTimeout(r, 2800));
-    setTransactions(MOCK_TRANSACTIONS);
-    setResult(MOCK_RESULT);
-    setState('results');
-  }, []);
-
   const reset = useCallback(() => {
     setState('idle');
     setResult(null);
     setTransactions([]);
     setError(null);
-    setIsMockMode(false);
     setFileName('');
   }, []);
 
@@ -322,5 +251,5 @@ export function useMuleAnalysis() {
     URL.revokeObjectURL(url);
   }, [result]);
 
-  return { state, result, transactions, error, isMockMode, fileName, analyze, loadMockData, reset, downloadJSON };
+  return { state, result, transactions, error, fileName, analyze, reset, downloadJSON };
 }

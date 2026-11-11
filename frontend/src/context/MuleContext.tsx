@@ -15,10 +15,8 @@ interface MuleContextType {
   result: AnalysisResult | null;
   transactions: Transaction[];
   error: string | null;
-  isMockMode: boolean;
   fileName: string;
   analyze: (file: File) => Promise<void>;
-  loadMockData: () => Promise<void>;
   reset: () => void;
   downloadJSON: () => void;
   settings: AppSettings;
